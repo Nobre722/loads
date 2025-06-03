@@ -1,25 +1,23 @@
-local players = game:GetService("Players")
-local lp = players.LocalPlayer
-local mouse = lp:GetMouse()
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
 
-local function getClosest()
-	local closest, dist = nil, math.huge
-	for _, v in pairs(players:GetPlayers()) do
-		if v ~= lp and v.Character and v.Character:FindFirstChild("Head") then
-			local pos = workspace.CurrentCamera:WorldToScreenPoint(v.Character.Head.Position)
-			local mag = (Vector2.new(pos.X, pos.Y) - Vector2.new(mouse.X, mouse.Y)).magnitude
-			if mag < dist then
-				closest = v
-				dist = mag
+local function getClosestTarget()
+	local closest, shortest = nil, math.huge
+	for _, player in ipairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			-- ✅ TEAM CHECK
+			if player.Team ~= LocalPlayer.Team then
+				local screenPos, onScreen = Camera:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
+				if onScreen then
+					local dist = (Vector2.new(mouse.X, mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
+					if dist < shortest then
+						closest = player
+						shortest = dist
+					end
+				end
 			end
 		end
 	end
 	return closest
 end
-
-game:GetService("RunService").RenderStepped:Connect(function()
-	local target = getClosest()
-	if target then
-		workspace.CurrentCamera.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position, target.Character.Head.Position)
-	end
-end)
